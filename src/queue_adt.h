@@ -1,6 +1,6 @@
 #ifndef QUEUE_ADT_H
 #define QUEUE_ADT_H
-
+#include "process.h"
 using namespace std;
 
 /**
@@ -20,5 +20,6 @@ public:
 };
 
 template class QueueADT<int>;
+template class QueueADT<Process>;
 
 #endif

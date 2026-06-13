@@ -1,6 +1,6 @@
 #ifndef PRIORITY_QUEUE_H
 #define PRIORITY_QUEUE_H
-
+#include "process.h"
 #include "queue_adt.h"
 using namespace std;
 
@@ -32,5 +32,6 @@ public:
 };
 
 template class PriorityQueue<int>;
+template class PriorityQueue<Process>;
 
 #endif
