@@ -29,9 +29,10 @@ public:
     int getSize() const;
     bool isEmpty() const;
     void clear();
+
+    void print(ostream&) const;
 };
 
-template class PriorityQueue<int>;
 template class PriorityQueue<Process>;
 
 #endif

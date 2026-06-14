@@ -3,7 +3,7 @@
  * @brief Unit test / demonstration driver for the Process ADT.
  */
 
-#include "Process.h"
+#include "process.h"
 #include <iostream>
 #include <vector>
 #include <queue>

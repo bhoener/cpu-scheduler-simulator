@@ -41,7 +41,9 @@ template <typename T>
 void PriorityQueue<T>::reallocate(int newSize)
 {
     T *newData = new T[newSize]();
-    memcpy(newData, data, newSize * sizeof(T));
+    for (int i = 0; i < size; i++) {
+        newData[i] = data[i];
+    }
     delete[] data;
     data = newData;
     capacity = newSize;
@@ -167,4 +169,16 @@ template <typename T>
 void PriorityQueue<T>::clear()
 {
     size = 0;
+}
+
+/**
+ * @brief print method for stream insertion
+ */
+template <typename T>
+void PriorityQueue<T>::print(ostream& os) const
+{
+    for (int i = 0; i < size; i++) {
+
+        cout << data[i] << endl;
+    }
 }

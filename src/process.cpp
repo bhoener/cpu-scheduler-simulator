@@ -3,7 +3,7 @@
  * @brief Implementation of the Process ADT for the CPU scheduling simulation.
  */
 
-#include "Process.h"
+#include "process.h"
 #include <stdexcept>
 #include <sstream>
 #include <iomanip>

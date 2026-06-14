@@ -1,5 +1,5 @@
 #ifndef QUEUE_H
-#define QUEUE_h
+#define QUEUE_H
 #include "process.h"
 #include "queue_adt.h"
 using namespace std;
@@ -38,9 +38,10 @@ public:
     bool isEmpty() const;
 
     void clear();
+
+    void print(ostream&) const;
 };
 
-template class Queue<int>;
 template class Queue<Process>;
 
 #endif

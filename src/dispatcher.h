@@ -15,7 +15,7 @@
 class Dispatcher
 {
 private:
-    Process *running_process;
+    Process running_process;
     QueueADT<Process> *ready_queue;
     QueueADT<Process> *waiting_queue;
 
@@ -41,7 +41,10 @@ public:
     /**
      * @return pointer to the current running process
      */
-    Process *getRunningProcess();
+    Process getRunningProcess() const;
+
+    friend
+    ostream& operator <<(ostream&, const Dispatcher&);
 };
 
 #endif

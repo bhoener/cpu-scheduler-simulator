@@ -11,15 +11,17 @@ template <typename T>
 class QueueADT
 {
 public:
+    virtual ~QueueADT() = default;
     virtual void add(const T &) = 0;
     virtual T remove() = 0;
     virtual T peek() const = 0;
     virtual int getSize() const = 0;
     virtual bool isEmpty() const = 0;
     virtual void clear() = 0;
+
+    virtual void print(ostream& os) const = 0;
 };
 
-template class QueueADT<int>;
 template class QueueADT<Process>;
 
 #endif

@@ -103,3 +103,16 @@ void Queue<T>::clear()
     while (!isEmpty())
         remove();
 }
+
+/**
+ * @brief print method for stream insertion
+ */
+template <typename T>
+void Queue<T>::print(ostream& os) const
+{
+    typename Queue<T>::ListNode * current = head;
+    while (current) {
+        os << current->data << endl;
+        current = current->next;
+    }
+}
