@@ -39,9 +39,9 @@ public:
     void step();
 
     /**
-     * @return pointer to the current running process
+     * @return reference to the current running process
      */
-    Process getRunningProcess() const;
+    Process& getRunningProcess();
 
     friend
     ostream& operator <<(ostream&, const Dispatcher&);
