@@ -47,9 +47,9 @@ void Dispatcher::step()
 }
 
 /**
- * @return pointer to the current running process
+ * @return reference to the current running process
  */
-Process Dispatcher::getRunningProcess() const
+Process& Dispatcher::getRunningProcess()
 {
     return running_process;
 }
