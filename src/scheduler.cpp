@@ -45,6 +45,7 @@ Scheduler::Scheduler(Resources resources, Config config)
       schedulingAlgorithm(config.schedulingAlgorithm),
       quantum(config.quantum),
       ioServiceTime(config.ioServiceTime),
+      contextSwitchTime(config.contextSwitchTime),
       clock(0),
       rrElapsed(0)
 {
@@ -98,8 +99,9 @@ void Scheduler::schedule()
 {
     // Admit pool processes that have arrived and haven't been admitted yet.
     // We mark admitted processes in the pool by transitioning them from NEW→READY.
-    for (auto &p : *processes)
+    for (int i = 0; i < processes->getSize(); i++)
     {
+        Process p = processes->get(i);
         if (!admitted(p.getPID()) && p.getArrivalTime() <= clock)
         {
             // push a copy into the ready queue && begin tracking
@@ -108,7 +110,7 @@ void Scheduler::schedule()
             admitToReady(p);
 
             // track that it's been admitted
-            admissionMeta.push_back({p.getPID(), true});
+            admissionMeta.add({p.getPID(), true});
         }
     }
 }
@@ -153,7 +155,7 @@ void Scheduler::execute()
         // record the process as completed
         runner.setCompletionTime(clock + 1);
         runner.terminate();
-        completed->push_back(runner);
+        completed->add(runner);
 
         // If a new process started, record its first-run time
         markFirstRun(afterRunner);
@@ -164,10 +166,13 @@ void Scheduler::execute()
 // see header for important information
 void Scheduler::process()
 {
-    vector<pair<int, int>> stillWaiting;
+    Vector<pair<int, int>> stillWaiting;
 
-    for (auto &[process_id, tick_it_entered_waiting] : waitingMeta)
+    for (int i = 0; i < waitingMeta.getSize(); i++)
     {
+        pair<int, int> p = waitingMeta.get(i);
+        int process_id = p.first;
+        int tick_it_entered_waiting = p.second;
         if (clock - tick_it_entered_waiting >= ioServiceTime)
         {
             Process p = getWaitingProcess(process_id);
@@ -176,11 +181,9 @@ void Scheduler::process()
         }
         else
         {
-            stillWaiting.emplace_back(process_id, tick_it_entered_waiting);
+            stillWaiting.add(pair<int, int>(process_id, tick_it_entered_waiting));
         }
     }
-
-    waitingMeta = move(stillWaiting);
 }
 
 // --- HELPER METHODS ---
@@ -214,6 +217,7 @@ void Scheduler::prempt() {
     dispatcher->nextProcess(); // also dumps old runner to waiting_queue (we ignore it)
     
     rrElapsed = 0;
+    clock+=contextSwitchTime;
     markFirstRun(dispatcher->getRunningProcess());
 };
 
@@ -230,9 +234,10 @@ void Scheduler::admitToReady(Process& p) {
 }
 
 bool Scheduler::admitted(int pid) {
-    for (auto &[process_id, hasBeenAdmitted] : admissionMeta)
-        if (pid == process_id && hasBeenAdmitted) return true;
-
+    for (int i = 0; i < admissionMeta.getSize(); i++) {
+        pair<int, int> p = admissionMeta.get(i); // (pid, hasBeenAdmitted)
+        if (pid == p.first && p.second) return true;
+    }
     return false;
 };
 
@@ -292,7 +297,7 @@ ostream& operator<<(ostream& os, const Scheduler& s) {
     os << "=== Scheduler [tick " << s.clock << "] "
        << Scheduler::algo_to_string(s.schedulingAlgorithm);
     os << *s.dispatcher;
-    os << "Completed: " << s.completed->size()
-       << " / " << s.processes->size() << "\n";
+    os << "Completed: " << s.completed->getSize()
+       << " / " << s.processes->getSize() << "\n";
     return os;
 }

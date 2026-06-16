@@ -47,8 +47,8 @@
 #include "queue.h"
 #include "priority_queue.h"
 #include "dispatcher.h"
+#include "vector.h"
 
-#include <vector>
 #include <iostream>
 #include <string>
 
@@ -73,12 +73,12 @@ struct Resources
 
     // All processes to be scheduled, in pristine form (not mutated by the simulation)
     // schedule() admits from it to ready_queue when clock >= arrivalTime
-    vector<Process>* processes; 
+    Vector<Process>* processes; 
 
     // Terminated processes, in finish order
     // schedule() / execute() move processes here when they complete
     // benchmarking / metrics methods read from this vector to compute results
-    vector<Process>* completed;
+    Vector<Process>* completed;
     
     Dispatcher *dispatcher;
 };
@@ -89,6 +89,7 @@ struct Config
     Algorithm schedulingAlgorithm = Algorithm::FCFS;
     int quantum = 10;      // RR time-slice length in ticks
     int ioServiceTime = 2; // Ticks a process stays in waiting before re-admit
+    int contextSwitchTime = 4; // Time taken to switch processes with the dispatcher
 };
 
 // Scheduler
@@ -98,14 +99,15 @@ private:
     // --- resources ---
     QueueADT<Process> *ready_queue;
     Queue<Process> *waiting_queue;
-    vector<Process> *processes;
-    vector<Process> *completed;
+    Vector<Process> *processes;
+    Vector<Process> *completed;
     Dispatcher *dispatcher;
 
     // --- configuration ---
     Algorithm schedulingAlgorithm;
     int quantum;
     int ioServiceTime;
+    int contextSwitchTime;
 
     // --- simulation state ---
     int clock;     // Current simulation tick (starts at 0)
@@ -113,11 +115,11 @@ private:
 
     // Tracks whether each process has been admitted from the processes vector
     // so we can detect firstRunTime(response time) && avoid duplicate admission
-    std::vector<std::pair<int, bool>> admissionMeta; // { process_id, bool hasBeenAdmitted }
+    Vector<std::pair<int, bool>> admissionMeta; // { process_id, bool hasBeenAdmitted }
 
     // Tracks when each process entered the waiting queue so ioServiceTime
     // expiry can be detected without storing extra state inside Process.
-    std::vector<std::pair<int, int>> waitingMeta; // { process_id, tick_it_entered_waiting }
+    Vector<std::pair<int, int>> waitingMeta; // { process_id, tick_it_entered_waiting }
     
    
     // --- PRIVATE METHODS && PHASES ---
@@ -225,7 +227,7 @@ public:
     // determines if all processes have completed by comparing the 
     // size of the completed vector to the size of the processes vector
     bool isFinished() const {
-        return (int)completed->size() == (int)processes->size();
+        return (int)completed->getSize() == (int)processes->getSize();
     }
 
     // --- Reset ---

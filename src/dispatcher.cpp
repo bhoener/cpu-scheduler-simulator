@@ -21,8 +21,11 @@ Dispatcher::~Dispatcher() {}
 void Dispatcher::nextProcess()
 {
     if (!(running_process.getState() == ProcessState::TERMINATED))
+    {
         running_process.block();
-    waiting_queue->add(running_process);
+        waiting_queue->add(running_process);
+    }
+
     try
     {
         running_process = ready_queue->remove();
@@ -49,7 +52,7 @@ void Dispatcher::step()
 /**
  * @return reference to the current running process
  */
-Process& Dispatcher::getRunningProcess()
+Process &Dispatcher::getRunningProcess()
 {
     return running_process;
 }

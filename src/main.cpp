@@ -14,60 +14,110 @@ using namespace std;
  */
 int main()
 {
+
     // simulation parameters
-    const unsigned int NUM_PROCESSES_TO_ADD = 100;
-    const unsigned int MAX_CONCURRENT_PROCESSES = 15;
+    const unsigned int NUM_PROCESSES_TO_ADD = 20;
 
     // to simulate high distribution of short bursts and small amount of large bursts
     // we have either short bursts or long bursts
-    const unsigned short int MAX_LONG_BURST_LENGTH = 500;
+    const unsigned short int MAX_LONG_BURST_LENGTH = 50;
     const unsigned short int MAX_SHORT_BURST_LENGTH = 20;
     const unsigned short int LONG_BURST_CHANCE = 10; // the probability of a long burst is 1/LONG_BURST_CHANCE
+    const unsigned int STARVATION_TIME = 50;         // number of steps a process can go before being "starved"
+
+    // for priority-based
+    const unsigned short int PRIORITY_LEVELS = 10;
 
     // cap the simulation length
     const unsigned int MAX_SIMULATION_STEPS = 10000;
 
     // initialize scheduler and queue of simulation processes
-    Scheduler *scheduler = new Scheduler(); // new RoundRobin(), new SJF(), etc.
-    Queue<Process> *processes_to_add = new Queue<Process>();
+    Config scheduler_config;
+    scheduler_config.schedulingAlgorithm = Algorithm::RR;
+    scheduler_config.ioServiceTime = 10;
+    scheduler_config.quantum = 10;
+    scheduler_config.contextSwitchTime = 2;
+    Resources scheduler_resources;
+    switch (scheduler_config.schedulingAlgorithm)
+    {
+    case Algorithm::FCFS:
+        scheduler_resources.ready_queue = new Queue<Process>();
+        break;
+    case Algorithm::RR:
+        scheduler_resources.ready_queue = new Queue<Process>();
+        break;
+    case Algorithm::SJF:
+        scheduler_resources.ready_queue = new PriorityQueue<Process>();
+        break;
+    case Algorithm::PRIORITY:
+        scheduler_resources.ready_queue = new PriorityQueue<Process>();
+        break;
+    }
+    scheduler_resources.waiting_queue = new Queue<Process>();
+    scheduler_resources.processes = new Vector<Process>();
+    scheduler_resources.completed = new Vector<Process>();
+    scheduler_resources.dispatcher = new Dispatcher(scheduler_resources.ready_queue, scheduler_resources.waiting_queue);
+    Scheduler *scheduler = new Scheduler(scheduler_resources, scheduler_config);
 
     for (int i = 1; i <= NUM_PROCESSES_TO_ADD; i++)
     {
         // simulate whether short or long burst and pick burst length accordingly
-        int burst_length = (rand() % LONG_BURST_CHANCE == 0) ? rand() % MAX_LONG_BURST_LENGTH : rand() % MAX_SHORT_BURST_LENGTH;
-        
+        int burst_length = (rand() % LONG_BURST_CHANCE == 0) ? rand() % MAX_LONG_BURST_LENGTH + 1 : rand() % MAX_SHORT_BURST_LENGTH + 1;
+
         // add process to queue
-        Process newProc(i, "process_" + to_string(i), i, burst_length);
+        Process newProc(i, "process_" + to_string(i), i, burst_length, rand() % PRIORITY_LEVELS);
         newProc.block();
-        processes_to_add->add(newProc);
+        scheduler_resources.processes->add(newProc);
     }
 
-    // run simulation, store steps taken (will stop at MAX_SIMULATION_STEPS if not done)
-    int steps_taken = MAX_SIMULATION_STEPS;
+    // run simulation
+    int load_total = 0;
+    int steps_taken = 0;
     for (int i = 0; i < MAX_SIMULATION_STEPS; i++)
     {
-        // if all processes are completed, exit early
-        if (scheduler->get_process_count == 0 && processes_to_add->isEmpty())
-        {
-            steps_taken = i + 1;
+        if (scheduler->isFinished())
             break;
-        }
-
-        // if there is room, squeeze in another process
-        if (scheduler->get_process_count < MAX_CONCURRENT_PROCESSES)
-            scheduler->load_process(processes_to_add->remove());
-
-        // tick the simulation and output
-        scheduler->step();
-        scheduler->log();
+        scheduler->tick();
+        steps_taken++;
+        load_total += scheduler_resources.ready_queue->getSize();
+        cout << *scheduler << endl;
     }
 
-    // log statistics
-    cout << "==================================" << endl;
-    cout << "Processes in simulation: " << NUM_PROCESSES_TO_ADD << endl;
-    cout << "Steps taken: " << steps_taken << endl;
+    int total_context_switches = 0;
+    int total_wait_time = 0;
+    int max_wait_time = 0;
+    int total_turnaround_time = 0;
+    int total_starved_processes = 0;
+    for (int i = 0; i < scheduler_resources.completed->getSize(); i++)
+    {
+        Process process = scheduler_resources.completed->get(i);
+        total_context_switches += process.getContextSwitches();
+        int wait_time = process.getWaitingTime();
+        total_wait_time += wait_time;
+        if (wait_time > STARVATION_TIME)
+            total_starved_processes++;
+        total_turnaround_time += process.getTurnaroundTime();
+        max_wait_time = (wait_time > max_wait_time) ? wait_time : max_wait_time;
+        cout << process << endl;
+    }
 
+    cout << "================================================" << endl;
+    cout << scheduler->algo_to_string(scheduler->getAlgorithm()) << endl;
+    cout << "TIME TAKEN: " << scheduler->getClock() << endl;
+    cout << "SIMULATION STEPS: " << steps_taken << endl;
+    cout << "AVERAGE WAITING TIME: " << (double)total_wait_time / (double)scheduler_resources.completed->getSize() << endl;
+    cout << "AVERAGE TURNAROUND TIME: " << total_turnaround_time / (double)scheduler_resources.completed->getSize() << endl;
+    cout << "LONGEST WAITING TIME: " << max_wait_time << endl;
+    cout << "NUMBER OF PRE-EMPTIVE CONTEXT SWITCHES: " << total_context_switches << endl;
+    cout << "TIME SPENT CONTEXT-SWITCHING: " << total_context_switches * scheduler_config.contextSwitchTime << endl;
+    cout << "AVERAGE LOAD: " << (double)load_total / (double)scheduler->getClock() << endl;
+    cout << "TOTAL STARVED PROCESSES: " << total_starved_processes << endl;
+
+    delete scheduler_resources.ready_queue;
+    delete scheduler_resources.waiting_queue;
+    delete scheduler_resources.processes;
+    delete scheduler_resources.completed;
+    delete scheduler_resources.dispatcher;
     delete scheduler;
-    delete processes_to_add;
     return 0;
 }
