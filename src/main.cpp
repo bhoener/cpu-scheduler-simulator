@@ -8,13 +8,15 @@
 #include <random>
 using namespace std;
 
-int prompt() {
+int prompt()
+{
     int algo;
     cout << "================================================" << endl;
     cout << "Please enter an algorithm to use: " << endl;
     cout << "| ";
-    for (Algorithm Algorithm: {Algorithm::FCFS, Algorithm::SJF, Algorithm::PRIORITY, Algorithm::RR}) {
-        cout << (int) Algorithm << ": " << Scheduler::algo_to_string(Algorithm) << " | ";
+    for (Algorithm Algorithm : {Algorithm::FCFS, Algorithm::SJF, Algorithm::PRIORITY, Algorithm::RR})
+    {
+        cout << (int)Algorithm << ": " << Scheduler::algo_to_string(Algorithm) << " | ";
     }
     cout << " (-1 to quit)" << endl;
     cout << endl;
@@ -30,7 +32,9 @@ int main()
 {
     cout << "Welcome to the CPU Scheduler Simulator!" << endl;
     int algo;
-    while ((algo = prompt()) != -1) {
+    while ((algo = prompt()) != -1)
+    {
+        srand(42); // keep processes deterministic
         // simulation parameters
         const unsigned int NUM_PROCESSES_TO_ADD = 20;
 
@@ -49,7 +53,7 @@ int main()
 
         // initialize scheduler and queue of simulation processes
         Config scheduler_config;
-        scheduler_config.schedulingAlgorithm = (Algorithm) algo;
+        scheduler_config.schedulingAlgorithm = (Algorithm)algo;
         scheduler_config.ioServiceTime = 10;
         scheduler_config.quantum = 10;
         scheduler_config.contextSwitchTime = 2;
@@ -136,6 +140,6 @@ int main()
         delete scheduler_resources.dispatcher;
         delete scheduler;
     }
-    
+
     return 0;
 }
